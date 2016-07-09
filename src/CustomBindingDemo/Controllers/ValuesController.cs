@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Mvc.CustomBinding;
 
 namespace CustomBindingDemo.Controllers
 {
@@ -11,13 +12,17 @@ namespace CustomBindingDemo.Controllers
     {
         public class Shallow
         {
-            public object Value { get; set; }
+            [DeepData]
+            public string Value { get; set; }
         }
 
+        [DeepDataRecurse]
         public class Deep
         {
-            public Shallow Shallow { get; set; }
-            public object Value { get; set; }
+            public Shallow[] Shallow { get; set; }
+
+            [DeepData]
+            public string Value { get; set; }
         }
         // GET api/values
         [HttpGet]
@@ -40,8 +45,9 @@ namespace CustomBindingDemo.Controllers
         }
 
         [HttpPost("blob")]
-        public void Post(Deep value)
+        public Deep Post([FromBody] Deep value, [DeepData] string other)
         {
+            return value;
         }
 
         // PUT api/values/5

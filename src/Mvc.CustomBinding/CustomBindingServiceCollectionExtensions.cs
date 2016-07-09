@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Mvc.CustomBinding;
@@ -21,6 +22,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.TryAddEnumerable(
                 ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, CustomBindingMvcOptionsSetup>());
+            services.AddSingleton<IModelBinderFactory, DeepDataBinderFactory>(sp => new DeepDataBinderFactory(sp.GetService<IModelMetadataProvider>(), sp.GetService<ModelBinderFactory>()));
+            services.AddSingleton<ModelBinderFactory>();
         }
 
 

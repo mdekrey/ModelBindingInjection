@@ -17,7 +17,7 @@ namespace Mvc.CustomBinding
 
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            bindingContext.Result = ModelBindingResult.Success(Activator.CreateInstance(bindingContext.ModelType));
+            bindingContext.Result = ModelBindingResult.Success(bindingContext.ModelType == typeof(string) ? "data" : Activator.CreateInstance(bindingContext.ModelType));
             return Microsoft.AspNetCore.Mvc.Internal.TaskCache.CompletedTask;
         }
     }
