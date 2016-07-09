@@ -9,6 +9,16 @@ namespace CustomBindingDemo.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        public class Shallow
+        {
+            public object Value { get; set; }
+        }
+
+        public class Deep
+        {
+            public Shallow Shallow { get; set; }
+            public object Value { get; set; }
+        }
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
@@ -26,6 +36,11 @@ namespace CustomBindingDemo.Controllers
         // POST api/values
         [HttpPost]
         public void Post([FromBody]string value)
+        {
+        }
+
+        [HttpPost("blob")]
+        public void Post(Deep value)
         {
         }
 
