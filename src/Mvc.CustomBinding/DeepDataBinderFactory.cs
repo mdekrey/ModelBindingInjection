@@ -5,6 +5,7 @@ using Microsoft.DotNet.InternalAbstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -30,138 +31,147 @@ namespace Mvc.CustomBinding
             }
             else
             {
-                var rebinder = CreateRebinder(context);
-                if (rebinder == null)
+                var rebinder = BuildRebinder(context.Metadata);
+                if (rebinder != null)
                 {
-                    return result;
+                    return new CustomModelRebinder(result, rebinder);
                 }
                 else
                 {
-                    return new CustomModelRebinder(result, rebinder);
+                    return result;
                 }
             }
         }
 
-        private IModelBinder CreateRebinder(ModelBinderFactoryContext context)
+        private IModelBinder BuildRebinder(ModelMetadata metadata)
         {
-            if (context.Metadata.IsCollectionType)
+            if (metadata.IsCollectionType)
             {
-                return new CollectionModelBinderProvider().GetBinder(CreateModelBinderProviderContext(context));
+                return new CollectionTypeModelRebinder(metadata, CreateBinder);
             }
-            else if (context.Metadata.IsComplexType)
+            else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<DeepDataRecurseAttribute>() != null)
             {
-                return new ComplexTypeModelBinderProvider().GetBinder(CreateModelBinderProviderContext(context));
+                return new ComplexTypeModelRebinder(metadata, CreateBinder);
+            }
+            else if (metadata.BindingSource == DeepDataAttribute.Source)
+            {
+                return new CustomModelBinder(metadata);
             }
             return null;
         }
 
-        private ModelBinderProviderContext CreateModelBinderProviderContext(ModelBinderFactoryContext context)
+        private IModelBinder CreateBinder(ModelMetadata arg)
         {
-            return new DefaultModelBinderProviderContext(this, context);
+            return BuildRebinder(arg);
+            //return original.CreateBinder(new ModelBinderFactoryContext
+            //{
+            //    Metadata = arg,
+            //    CacheToken = arg,
+            //    BindingInfo = new BindingInfo
+            //    {
+            //        BinderModelName = arg.BinderModelName,
+            //        BinderType = arg.BinderType,
+            //        BindingSource = arg.BindingSource,
+            //        PropertyFilterProvider = arg.PropertyFilterProvider,
+            //    }
+            //});
         }
 
-        private class DefaultModelBinderProviderContext : ModelBinderProviderContext
+        class ComplexTypeModelRebinder : IModelBinder
         {
-            private readonly DeepDataBinderFactory factory;
+            private readonly Dictionary<ModelMetadata, IModelBinder> propertyBinders;
 
-            public DefaultModelBinderProviderContext(
-                DeepDataBinderFactory factory,
-                ModelBinderFactoryContext factoryContext)
+            public ComplexTypeModelRebinder(ModelMetadata metadata, Func<ModelMetadata, IModelBinder> createBinder)
             {
-                this.factory = factory;
-                Metadata = factoryContext.Metadata;
-                BindingInfo = new BindingInfo
+                var propertyBinders = new Dictionary<ModelMetadata, IModelBinder>();
+                foreach (var property in metadata.Properties)
                 {
-                    BinderModelName = Metadata.BinderModelName,
-                    BinderType = Metadata.BinderType,
-                    BindingSource = Metadata.BindingSource,
-                    PropertyFilterProvider = Metadata.PropertyFilterProvider,
-                };
-                MetadataProvider = factory.metadataProvider;
-                Visited = new Dictionary<Key, IModelBinder>();
+                    propertyBinders.Add(property, createBinder(property));
+                }
+                this.propertyBinders = propertyBinders;
             }
 
-            public override BindingInfo BindingInfo { get; }
-
-            public override ModelMetadata Metadata { get; }
-
-            public override IModelMetadataProvider MetadataProvider { get; }
-
-            public Dictionary<Key, IModelBinder> Visited { get; }
-
-            public override IModelBinder CreateBinder(ModelMetadata metadata)
+            public async Task BindModelAsync(ModelBindingContext bindingContext)
             {
-                if (metadata == null)
+                if (bindingContext.Model == null)
                 {
-                    throw new ArgumentNullException(nameof(metadata));
+                    ModelBindingResult.Failed();
                 }
-
-                // For non-root nodes we use the ModelMetadata as the cache token. This ensures that all non-root
-                // nodes with the same metadata will have the the same binder. This is OK because for an non-root
-                // node there's no opportunity to customize binding info like there is for a parameter.
-                var token = metadata;
-
-                return factory.CreateBinder(new ModelBinderFactoryContext
+                foreach (var property in bindingContext.ModelMetadata.Properties)
                 {
-                    BindingInfo = new BindingInfo
+                    // Pass complex (including collection) values down so that binding system does not unnecessarily
+                    // recreate instances or overwrite inner properties that are not bound. No need for this with simple
+                    // values because they will be overwritten if binding succeeds. Arrays are never reused because they
+                    // cannot be resized.
+                    object propertyModel = null;
+                    if (property.PropertyGetter != null &&
+                        property.IsComplexType)
                     {
-                        BinderModelName = metadata.BinderModelName ?? BindingInfo?.BinderModelName,
-                        BinderType = metadata.BinderType ?? BindingInfo?.BinderType,
-                        BindingSource = metadata.BindingSource ?? BindingInfo?.BindingSource,
-                        PropertyFilterProvider =
-                            metadata.PropertyFilterProvider ?? BindingInfo?.PropertyFilterProvider,
-                    },
-                    Metadata = metadata,
-                    CacheToken = token,
-                });
+                        propertyModel = property.PropertyGetter(bindingContext.Model);
+                    }
+
+                    var fieldName = property.BinderModelName ?? property.PropertyName;
+                    var modelName = ModelNames.CreatePropertyModelName(bindingContext.ModelName, fieldName);
+
+                    ModelBindingResult result = ModelBindingResult.Failed();
+                    using (bindingContext.EnterNestedScope(
+                        modelMetadata: property,
+                        fieldName: fieldName,
+                        modelName: modelName,
+                        model: propertyModel))
+                    {
+                        if (propertyBinders[property] != null)
+                        {
+                            await propertyBinders[property].BindModelAsync(bindingContext);
+                            result = bindingContext.Result;
+                        }
+                    }
+
+                    if (result.IsModelSet)
+                    {
+                        try
+                        {
+                            property.PropertySetter(bindingContext.Model, result.Model);
+                        }
+                        catch (Exception) // exception)
+                        {
+                            // TODO - log model errors
+                            //AddModelError(exception, modelName, bindingContext, result);
+                        }
+                    }
+                }
+
+                bindingContext.Result = ModelBindingResult.Success(bindingContext.Model);
             }
         }
 
 
-        // This key allows you to specify a ModelMetadata which represents the type/property being bound
-        // and a 'token' which acts as an arbitrary discriminator.
-        //
-        // This is necessary because the same metadata might be bound as a top-level parameter (with BindingInfo on
-        // the ParameterDescriptor) or in a call to TryUpdateModel (no BindingInfo) or as a collection element.
-        //
-        // We need to be able to tell the difference between these things to avoid over-caching.
-        private struct Key : IEquatable<Key>
+        class CollectionTypeModelRebinder : IModelBinder
         {
-            private readonly ModelMetadata _metadata;
-            private readonly object _token; // Explicitly using ReferenceEquality for tokens.
+            private readonly IModelBinder elementBinder;
+            private readonly ModelMetadata elementMetadata;
 
-            public Key(ModelMetadata metadata, object token)
+            public CollectionTypeModelRebinder(ModelMetadata metadata, Func<ModelMetadata, IModelBinder> createBinder)
             {
-                _metadata = metadata;
-                _token = token;
+                elementMetadata = metadata.ElementMetadata;
+                elementBinder = createBinder(elementMetadata);
             }
 
-            public bool Equals(Key other)
+            public async Task BindModelAsync(ModelBindingContext bindingContext)
             {
-                return _metadata.Equals(other._metadata) && object.ReferenceEquals(_token, other._token);
-            }
-
-            public override bool Equals(object obj)
-            {
-                var other = obj as Key?;
-                return other.HasValue && Equals(other.Value);
-            }
-
-            public override int GetHashCode()
-            {
-                var hashFirst = _metadata.GetHashCode();
-                return ((hashFirst << 5) + hashFirst) ^ RuntimeHelpers.GetHashCode(_token);
-            }
-
-            public override string ToString()
-            {
-                if (_metadata.MetadataKind == ModelMetadataKind.Type)
+                if (bindingContext.Model != null && elementBinder != null)
                 {
-                    return $"{_token} (Type: '{_metadata.ModelType.Name}')";
-                }
-                else
-                {
-                    return $"{_token} (Property: '{_metadata.ContainerType.Name}.{_metadata.PropertyName}' Type: '{_metadata.ModelType.Name}')";
+                    foreach (var entry in (System.Collections.IEnumerable)bindingContext.Model)
+                    {
+                        using (bindingContext.EnterNestedScope(
+                            elementMetadata,
+                            fieldName: bindingContext.FieldName,
+                            modelName: bindingContext.ModelName,
+                            model: entry))
+                        {
+                            await elementBinder.BindModelAsync(bindingContext);
+                        }
+                    }
                 }
             }
         }

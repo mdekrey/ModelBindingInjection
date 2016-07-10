@@ -4,14 +4,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.CustomBinding;
+using System.ComponentModel.DataAnnotations;
 
 namespace CustomBindingDemo.Controllers
 {
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        [DeepDataRecurse]
         public class Shallow
         {
+            [Required]
             [DeepData]
             public string Value { get; set; }
         }
