@@ -14,10 +14,12 @@ namespace Mvc.CustomBinding
         {
             this.metadata = metadata;
         }
-
+        
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            bindingContext.Result = ModelBindingResult.Success(bindingContext.ModelType == typeof(string) ? "data" : Activator.CreateInstance(bindingContext.ModelType));
+            var container = (bindingContext as RebindingModelBindingContext)?.ContainerModelMetadata;
+
+            bindingContext.Result = ModelBindingResult.Success((bindingContext.ModelType == typeof(string) || bindingContext.ModelType == typeof(object)) ? (container?.ModelType.FullName ?? "root") : Activator.CreateInstance(bindingContext.ModelType));
             return Microsoft.AspNetCore.Mvc.Internal.TaskCache.CompletedTask;
         }
     }

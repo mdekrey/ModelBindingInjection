@@ -18,8 +18,7 @@ namespace Mvc.CustomBinding
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
             await binder.BindModelAsync(bindingContext);
-            var rebindingContext = DefaultModelBindingContext.CreateBindingContext(bindingContext.ActionContext, bindingContext.ValueProvider, bindingContext.ModelMetadata, new BindingInfo(), bindingContext.ModelName);
-            rebindingContext.Model = bindingContext.Result.Model;
+            var rebindingContext = RebindingModelBindingContext.CreateBindingContext(bindingContext.ActionContext, bindingContext.ValueProvider, bindingContext.ModelMetadata, new BindingInfo(), bindingContext.ModelName, bindingContext.Result.Model);
             await rebinder.BindModelAsync(rebindingContext);
         }
     }

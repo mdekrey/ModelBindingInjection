@@ -16,7 +16,7 @@ namespace CustomBindingDemo.Controllers
         {
             [Required]
             [DeepData]
-            public string Value { get; set; }
+            public object Value { get; set; }
         }
 
         [DeepDataRecurse]
@@ -25,8 +25,25 @@ namespace CustomBindingDemo.Controllers
             public Shallow[] Shallow { get; set; }
 
             [DeepData]
-            public string Value { get; set; }
+            public object Value { get; set; }
         }
+
+        public class RequestRoute
+        {
+            [FromRoute]
+            public string Id { get; set; }
+        }
+
+        [DeepDataRecurse]
+        public class FullRequest : RequestRoute
+        {
+            [FromBody]
+            public Deep Body { get; set; }
+
+            [DeepData]
+            public object Value { get; set; }
+        }
+
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
@@ -55,8 +72,9 @@ namespace CustomBindingDemo.Controllers
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        public FullRequest Put(FullRequest rq)
         {
+            return rq;
         }
 
         // DELETE api/values/5
