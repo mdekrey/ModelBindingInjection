@@ -8,7 +8,6 @@ namespace Mvc.CustomBinding
     {
         public void Configure(MvcOptions options)
         {
-            //options.ValueProviderFactories.Add(new DeepDataValueProviderFactory());
             options.ModelBinderProviders.Insert(0, new CustomModelBinderProvider());
         }
     }
