@@ -14,15 +14,9 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static void AddCustomBinding(this IServiceCollection services)
         {
-            AddCustomBindingServices(services);
-
-        }
-
-        private static void AddCustomBindingServices(IServiceCollection services)
-        {
             services.TryAddEnumerable(
                 ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, CustomBindingMvcOptionsSetup>());
-            services.AddSingleton<IModelBinderFactory, DeepDataBinderFactory>(sp => new DeepDataBinderFactory(sp.GetService<IModelMetadataProvider>(), sp.GetService<ModelBinderFactory>()));
+            services.AddSingleton<IModelBinderFactory, DeepDataBinderFactory>(sp => new DeepDataBinderFactory(sp.GetService<ModelBinderFactory>()));
             services.AddSingleton<ModelBinderFactory>();
         }
 

@@ -13,14 +13,13 @@ namespace Mvc.CustomBinding
 {
     public class DeepDataBinderFactory : IModelBinderFactory
     {
-        private readonly IModelMetadataProvider metadataProvider;
         private readonly IModelBinderFactory original;
 
-        public DeepDataBinderFactory(IModelMetadataProvider metadataProvider, IModelBinderFactory original)
+        public DeepDataBinderFactory(IModelBinderFactory original)
         {
-            this.metadataProvider = metadataProvider;
             this.original = original;
         }
+
         public IModelBinder CreateBinder(ModelBinderFactoryContext context)
         {
             var result = original.CreateBinder(context);
@@ -47,34 +46,17 @@ namespace Mvc.CustomBinding
         {
             if (metadata.IsCollectionType)
             {
-                return new CollectionTypeModelRebinder(metadata, CreateBinder);
+                return new CollectionTypeModelRebinder(metadata, BuildRebinder);
             }
             else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<DeepDataRecurseAttribute>() != null)
             {
-                return new ComplexTypeModelRebinder(metadata, CreateBinder);
+                return new ComplexTypeModelRebinder(metadata, BuildRebinder);
             }
             else if (metadata.BindingSource == DeepDataAttribute.Source)
             {
                 return new CustomModelBinder(metadata);
             }
             return null;
-        }
-
-        private IModelBinder CreateBinder(ModelMetadata arg)
-        {
-            return BuildRebinder(arg);
-            //return original.CreateBinder(new ModelBinderFactoryContext
-            //{
-            //    Metadata = arg,
-            //    CacheToken = arg,
-            //    BindingInfo = new BindingInfo
-            //    {
-            //        BinderModelName = arg.BinderModelName,
-            //        BinderType = arg.BinderType,
-            //        BindingSource = arg.BindingSource,
-            //        PropertyFilterProvider = arg.PropertyFilterProvider,
-            //    }
-            //});
         }
 
         class ComplexTypeModelRebinder : IModelBinder
