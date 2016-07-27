@@ -8,13 +8,6 @@ namespace Mvc.CustomBinding
 {
     public class CustomModelBinder : IModelBinder
     {
-        private ModelMetadata metadata;
-
-        public CustomModelBinder(ModelMetadata metadata)
-        {
-            this.metadata = metadata;
-        }
-        
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
             var container = (bindingContext as ModelPostbindingContext)?.ContainerModelMetadata;

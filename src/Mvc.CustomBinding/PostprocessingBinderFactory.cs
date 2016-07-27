@@ -54,7 +54,7 @@ namespace Mvc.CustomBinding
             }
             else if (metadata.BindingSource == PostprocessBindingAttribute.Source)
             {
-                return new CustomModelBinder(metadata);
+                return new CustomModelBinder();
             }
             return null;
         }

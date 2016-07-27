@@ -14,8 +14,6 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static void AddPostprocessBinding(this IServiceCollection services)
         {
-            services.TryAddEnumerable(
-                ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, PostprocessMvcOptionsSetup>());
             services.AddSingleton<IModelBinderFactory, PostprocessingBinderFactory>(sp => new PostprocessingBinderFactory(sp.GetService<ModelBinderFactory>()));
             services.AddSingleton<ModelBinderFactory>();
         }
