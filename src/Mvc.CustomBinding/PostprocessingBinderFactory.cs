@@ -23,22 +23,15 @@ namespace Mvc.CustomBinding
         public IModelBinder CreateBinder(ModelBinderFactoryContext context)
         {
             var result = original.CreateBinder(context);
-
-            if (result is CustomModelBinder)
+            
+            var rebinder = BuildRebinder(context.Metadata);
+            if (rebinder != null)
             {
-                return result;
+                return new ModelRebinder(result, rebinder);
             }
             else
             {
-                var rebinder = BuildRebinder(context.Metadata);
-                if (rebinder != null)
-                {
-                    return new ModelRebinder(result, rebinder);
-                }
-                else
-                {
-                    return result;
-                }
+                return result;
             }
         }
 
