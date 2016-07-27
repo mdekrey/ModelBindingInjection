@@ -14,7 +14,8 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static void AddPostprocessBinding(this IServiceCollection services)
         {
-            services.AddSingleton<IModelBinderFactory, PostprocessingBinderFactory>(sp => new PostprocessingBinderFactory(sp.GetService<ModelBinderFactory>()));
+            services.AddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
+            services.AddSingleton<IModelBinderFactory, PostprocessingBinderFactory>(sp => new PostprocessingBinderFactory(sp.GetService<IPostprocessBinderFactory>(), sp.GetService<ModelBinderFactory>()));
             services.AddSingleton<ModelBinderFactory>();
         }
 

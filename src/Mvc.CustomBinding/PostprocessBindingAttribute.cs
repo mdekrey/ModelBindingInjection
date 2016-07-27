@@ -18,5 +18,7 @@ namespace Mvc.CustomBinding
                 return Source;
             }
         }
+
+        public Type PostprocessModelBinder => typeof(CustomModelBinder);
     }
 }

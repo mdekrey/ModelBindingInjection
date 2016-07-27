@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.DotNet.InternalAbstractions;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +15,11 @@ namespace Mvc.CustomBinding
     public class PostprocessingBinderFactory : IModelBinderFactory
     {
         private readonly IModelBinderFactory original;
+        private readonly IPostprocessBinderFactory postprocessBinderFactory;
 
-        public PostprocessingBinderFactory(IModelBinderFactory original)
+        public PostprocessingBinderFactory(IPostprocessBinderFactory postprocessBinderFactory, IModelBinderFactory original)
         {
+            this.postprocessBinderFactory = postprocessBinderFactory;
             this.original = original;
         }
 
@@ -47,7 +50,7 @@ namespace Mvc.CustomBinding
             }
             else if (metadata.BindingSource == PostprocessBindingAttribute.Source)
             {
-                return new CustomModelBinder();
+                return postprocessBinderFactory.GetModelBinder(metadata);
             }
             return null;
         }

@@ -8,11 +8,18 @@ namespace Mvc.CustomBinding
 {
     public class CustomModelBinder : IModelBinder
     {
+        private readonly object result;
+
+        public CustomModelBinder(ModelMetadata metadata)
+        {
+            this.result = (metadata.ModelType == typeof(string) || metadata.ModelType == typeof(object))
+                ? (metadata.ContainerType?.FullName ?? "root")
+                : Activator.CreateInstance(metadata.ModelType);
+        }
+
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var container = (bindingContext as ModelPostbindingContext)?.ContainerModelMetadata;
-
-            bindingContext.Result = ModelBindingResult.Success((bindingContext.ModelType == typeof(string) || bindingContext.ModelType == typeof(object)) ? (container?.ModelType.FullName ?? "root") : Activator.CreateInstance(bindingContext.ModelType));
+            bindingContext.Result = ModelBindingResult.Success(result);
             return Microsoft.AspNetCore.Mvc.Internal.TaskCache.CompletedTask;
         }
     }
