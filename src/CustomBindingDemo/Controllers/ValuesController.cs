@@ -15,7 +15,7 @@ namespace CustomBindingDemo.Controllers
         public class Shallow
         {
             [Required]
-            [PostprocessBinding]
+            [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
@@ -24,7 +24,7 @@ namespace CustomBindingDemo.Controllers
         {
             public Shallow[] Shallow { get; set; }
 
-            [PostprocessBinding]
+            [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
@@ -40,7 +40,7 @@ namespace CustomBindingDemo.Controllers
             [FromBody]
             public Deep Body { get; set; }
 
-            [PostprocessBinding]
+            [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
@@ -65,9 +65,9 @@ namespace CustomBindingDemo.Controllers
         }
 
         [HttpPost("blob")]
-        public Deep Post([FromBody] Deep value, [PostprocessBinding] string other)
+        public Tuple<Deep, string> Post([FromBody] Deep value, [PostprocessBinding(typeof(CustomModelBinder))] string other)
         {
-            return value;
+            return Tuple.Create(value, other);
         }
 
         // PUT api/values/5

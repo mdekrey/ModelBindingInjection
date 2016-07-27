@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 
 namespace Mvc.CustomBinding
 {
+    delegate IModelBinder RebinderFactory(ModelMetadata metadata);
+
     public class PostprocessingBinderFactory : IModelBinderFactory
     {
         private readonly IModelBinderFactory original;
@@ -59,7 +61,7 @@ namespace Mvc.CustomBinding
         {
             private readonly Dictionary<ModelMetadata, IModelBinder> propertyBinders;
 
-            public ComplexTypeModelRebinder(ModelMetadata metadata, Func<ModelMetadata, IModelBinder> createBinder)
+            public ComplexTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
             {
                 var propertyBinders = new Dictionary<ModelMetadata, IModelBinder>();
                 foreach (var property in metadata.Properties)
@@ -129,7 +131,7 @@ namespace Mvc.CustomBinding
             private readonly IModelBinder elementBinder;
             private readonly ModelMetadata elementMetadata;
 
-            public CollectionTypeModelRebinder(ModelMetadata metadata, Func<ModelMetadata, IModelBinder> createBinder)
+            public CollectionTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
             {
                 elementMetadata = metadata.ElementMetadata;
                 elementBinder = createBinder(elementMetadata);

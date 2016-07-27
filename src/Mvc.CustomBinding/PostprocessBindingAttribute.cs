@@ -9,16 +9,15 @@ namespace Mvc.CustomBinding
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.Class)]
     public class PostprocessBindingAttribute : Attribute, IBindingSourceMetadata
     {
-        public static readonly BindingSource Source = new BindingSource("DeepData", "DeepData", true, false);
+        public static readonly BindingSource Source = new BindingSource("PostprocessBinding", "PostprocessBinding", true, false);
 
-        public BindingSource BindingSource
+        public PostprocessBindingAttribute(Type postprocessModelBinder)
         {
-            get
-            {
-                return Source;
-            }
+            this.PostprocessModelBinder = postprocessModelBinder;
         }
 
-        public Type PostprocessModelBinder => typeof(CustomModelBinder);
+        public BindingSource BindingSource => Source;
+
+        public Type PostprocessModelBinder { get; }
     }
 }
