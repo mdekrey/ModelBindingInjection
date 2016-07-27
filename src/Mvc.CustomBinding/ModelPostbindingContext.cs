@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Mvc.CustomBinding
 {
-    public class RebindingModelBindingContext : DefaultModelBindingContext
+    public class ModelPostbindingContext : DefaultModelBindingContext
     {
         private Stack<Tuple<ModelMetadata, object>> containers = new Stack<Tuple<ModelMetadata, object>>();
         
-        public RebindingModelBindingContext(ModelMetadata originalModelMetadata, object originalModel)
+        public ModelPostbindingContext(ModelMetadata originalModelMetadata, object originalModel)
         {
             OriginalModelMetadata = originalModelMetadata;
             OriginalModel = originalModel;
@@ -41,7 +41,7 @@ namespace Mvc.CustomBinding
             base.ExitNestedScope();
         }
 
-        public static RebindingModelBindingContext CreateBindingContext(
+        public static ModelPostbindingContext CreateBindingContext(
             ActionContext actionContext,
             IValueProvider valueProvider,
             ModelMetadata metadata,
@@ -74,7 +74,7 @@ namespace Mvc.CustomBinding
 
             var bindingSource = bindingInfo?.BindingSource ?? metadata.BindingSource;
 
-            return new RebindingModelBindingContext(metadata, originalModel)
+            return new ModelPostbindingContext(metadata, originalModel)
             {
                 ActionContext = actionContext,
                 BinderModelName = binderModelName,

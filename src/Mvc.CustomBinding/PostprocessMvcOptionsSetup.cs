@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace Mvc.CustomBinding
 {
-    internal class CustomBindingMvcOptionsSetup : IConfigureOptions<MvcOptions>
+    internal class PostprocessMvcOptionsSetup : IConfigureOptions<MvcOptions>
     {
         public void Configure(MvcOptions options)
         {

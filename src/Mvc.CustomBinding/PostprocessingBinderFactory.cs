@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace Mvc.CustomBinding
 {
-    public class DeepDataBinderFactory : IModelBinderFactory
+    public class PostprocessingBinderFactory : IModelBinderFactory
     {
         private readonly IModelBinderFactory original;
 
-        public DeepDataBinderFactory(IModelBinderFactory original)
+        public PostprocessingBinderFactory(IModelBinderFactory original)
         {
             this.original = original;
         }
@@ -33,7 +33,7 @@ namespace Mvc.CustomBinding
                 var rebinder = BuildRebinder(context.Metadata);
                 if (rebinder != null)
                 {
-                    return new CustomModelRebinder(result, rebinder);
+                    return new ModelRebinder(result, rebinder);
                 }
                 else
                 {
@@ -48,11 +48,11 @@ namespace Mvc.CustomBinding
             {
                 return new CollectionTypeModelRebinder(metadata, BuildRebinder);
             }
-            else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<DeepDataRecurseAttribute>() != null)
+            else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<RecursePostprocessBindingAttribute>() != null)
             {
                 return new ComplexTypeModelRebinder(metadata, BuildRebinder);
             }
-            else if (metadata.BindingSource == DeepDataAttribute.Source)
+            else if (metadata.BindingSource == PostprocessBindingAttribute.Source)
             {
                 return new CustomModelBinder(metadata);
             }

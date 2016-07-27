@@ -11,20 +11,20 @@ namespace CustomBindingDemo.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
-        [DeepDataRecurse]
+        [RecursePostprocessBinding]
         public class Shallow
         {
             [Required]
-            [DeepData]
+            [PostprocessBinding]
             public object Value { get; set; }
         }
 
-        [DeepDataRecurse]
+        [RecursePostprocessBinding]
         public class Deep
         {
             public Shallow[] Shallow { get; set; }
 
-            [DeepData]
+            [PostprocessBinding]
             public object Value { get; set; }
         }
 
@@ -34,13 +34,13 @@ namespace CustomBindingDemo.Controllers
             public string Id { get; set; }
         }
 
-        [DeepDataRecurse]
+        [RecursePostprocessBinding]
         public class FullRequest : RequestRoute
         {
             [FromBody]
             public Deep Body { get; set; }
 
-            [DeepData]
+            [PostprocessBinding]
             public object Value { get; set; }
         }
 
@@ -65,7 +65,7 @@ namespace CustomBindingDemo.Controllers
         }
 
         [HttpPost("blob")]
-        public Deep Post([FromBody] Deep value, [DeepData] string other)
+        public Deep Post([FromBody] Deep value, [PostprocessBinding] string other)
         {
             return value;
         }

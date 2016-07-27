@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class CustomBindingServiceCollectionExtensions
+    public static class PostprocessServiceCollectionExtensions
     {
-        public static void AddCustomBinding(this IServiceCollection services)
+        public static void AddPostprocessBinding(this IServiceCollection services)
         {
             services.TryAddEnumerable(
-                ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, CustomBindingMvcOptionsSetup>());
-            services.AddSingleton<IModelBinderFactory, DeepDataBinderFactory>(sp => new DeepDataBinderFactory(sp.GetService<ModelBinderFactory>()));
+                ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, PostprocessMvcOptionsSetup>());
+            services.AddSingleton<IModelBinderFactory, PostprocessingBinderFactory>(sp => new PostprocessingBinderFactory(sp.GetService<ModelBinderFactory>()));
             services.AddSingleton<ModelBinderFactory>();
         }
 

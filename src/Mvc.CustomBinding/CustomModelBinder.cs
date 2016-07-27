@@ -17,7 +17,7 @@ namespace Mvc.CustomBinding
         
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var container = (bindingContext as RebindingModelBindingContext)?.ContainerModelMetadata;
+            var container = (bindingContext as ModelPostbindingContext)?.ContainerModelMetadata;
 
             bindingContext.Result = ModelBindingResult.Success((bindingContext.ModelType == typeof(string) || bindingContext.ModelType == typeof(object)) ? (container?.ModelType.FullName ?? "root") : Activator.CreateInstance(bindingContext.ModelType));
             return Microsoft.AspNetCore.Mvc.Internal.TaskCache.CompletedTask;
