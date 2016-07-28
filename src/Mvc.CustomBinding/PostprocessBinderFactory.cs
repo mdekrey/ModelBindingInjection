@@ -17,7 +17,7 @@ namespace Mvc.CustomBinding
             this.serviceProvider = serviceProvider;
         }
 
-        public IModelBinder GetModelBinder(ModelMetadata metadata)
+        public IModelPostbinder GetModelBinder(ModelMetadata metadata)
         {
             var attributes = (metadata as DefaultModelMetadata).Attributes.Attributes.OfType<PostprocessBindingAttribute>().ToArray();
             if (attributes.Length != 1)
@@ -25,7 +25,7 @@ namespace Mvc.CustomBinding
                 throw new InvalidOperationException("Exactly 1 attribute must be provided of type " + nameof(PostprocessBindingAttribute));
             }
             var target = attributes[0];
-            return ActivatorUtilities.CreateInstance(this.serviceProvider, target.PostprocessModelBinder, metadata) as IModelBinder;
+            return ActivatorUtilities.CreateInstance(this.serviceProvider, target.PostprocessModelBinder, metadata) as IModelPostbinder;
         }
     }
 }

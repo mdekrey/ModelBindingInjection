@@ -7,9 +7,9 @@ namespace Mvc.CustomBinding
     internal class ModelRebinder : IModelBinder
     {
         private readonly IModelBinder binder;
-        private readonly IModelBinder postbinder;
+        private readonly IModelPostbinder postbinder;
 
-        public ModelRebinder(IModelBinder binder, IModelBinder postbinder)
+        public ModelRebinder(IModelBinder binder, IModelPostbinder postbinder)
         {
             this.binder = binder;
             this.postbinder = postbinder;

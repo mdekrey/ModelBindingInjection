@@ -8,6 +8,6 @@ namespace Mvc.CustomBinding
 {
     public interface IPostprocessBinderFactory
     {
-        IModelBinder GetModelBinder(ModelMetadata metadata);
+        IModelPostbinder GetModelBinder(ModelMetadata metadata);
     }
 }

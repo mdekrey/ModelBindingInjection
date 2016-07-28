@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Mvc.CustomBinding
 {
-    delegate IModelBinder RebinderFactory(ModelMetadata metadata);
+    delegate IModelPostbinder RebinderFactory(ModelMetadata metadata);
 
     public class PostprocessingBinderFactory : IModelBinderFactory
     {
@@ -40,7 +40,7 @@ namespace Mvc.CustomBinding
             }
         }
 
-        private IModelBinder BuildRebinder(ModelMetadata metadata)
+        private IModelPostbinder BuildRebinder(ModelMetadata metadata)
         {
             if (metadata.IsCollectionType)
             {
@@ -57,13 +57,13 @@ namespace Mvc.CustomBinding
             return null;
         }
 
-        class ComplexTypeModelRebinder : IModelBinder
+        class ComplexTypeModelRebinder : IModelPostbinder
         {
-            private readonly Dictionary<ModelMetadata, IModelBinder> propertyBinders;
+            private readonly Dictionary<ModelMetadata, IModelPostbinder> propertyBinders;
 
             public ComplexTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
             {
-                var propertyBinders = new Dictionary<ModelMetadata, IModelBinder>();
+                var propertyBinders = new Dictionary<ModelMetadata, IModelPostbinder>();
                 foreach (var property in metadata.Properties)
                 {
                     propertyBinders.Add(property, createBinder(property));
@@ -71,7 +71,7 @@ namespace Mvc.CustomBinding
                 this.propertyBinders = propertyBinders;
             }
 
-            public async Task BindModelAsync(ModelBindingContext bindingContext)
+            public async Task BindModelAsync(ModelPostbindingContext bindingContext)
             {
                 if (bindingContext.Model == null)
                 {
@@ -126,9 +126,9 @@ namespace Mvc.CustomBinding
         }
 
 
-        class CollectionTypeModelRebinder : IModelBinder
+        class CollectionTypeModelRebinder : IModelPostbinder
         {
-            private readonly IModelBinder elementBinder;
+            private readonly IModelPostbinder elementBinder;
             private readonly ModelMetadata elementMetadata;
 
             public CollectionTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
@@ -137,7 +137,7 @@ namespace Mvc.CustomBinding
                 elementBinder = createBinder(elementMetadata);
             }
 
-            public async Task BindModelAsync(ModelBindingContext bindingContext)
+            public async Task BindModelAsync(ModelPostbindingContext bindingContext)
             {
                 if (bindingContext.Model != null && elementBinder != null)
                 {
