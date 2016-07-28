@@ -12,21 +12,41 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class PostprocessServiceCollectionExtensions
     {
+        /// <summary>
+        /// Adds post-process binding to the model binder. This allows for additional binding to occur after standard binding,
+        /// but prior to validation.
+        /// 
+        /// This preserves any custom IModelBinderFactory that may already be registered, or uses the default if none is registered.
+        /// </summary>
+        /// <param name="services">The service collection to which </param>
         public static void AddPostprocessBinding(this IServiceCollection services)
         {
-            services.AddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
+            services.TryAddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
 
-            services.Decorate<IModelBinderFactory>(originalFactory => provider =>
+            services.Decorate(DefaultFactory, originalFactory => provider =>
                 new PostprocessingBinderFactory(provider.GetService<IPostprocessBinderFactory>(), originalFactory(provider)));
         }
 
-        public static void Decorate<T>(this IServiceCollection services, Func<Func<IServiceProvider, T>, Func<IServiceProvider, T>> decorator)
-            where T : class
+        private static Func<IServiceProvider, IModelBinderFactory> DefaultFactory(IServiceCollection services)
         {
-            services.AddSingleton(decorator(PrepareDecorateService<T>(services)));
+            services.AddSingleton< ModelBinderFactory>();
+            return provider => provider.GetService<ModelBinderFactory>();
         }
 
-        private static Func<IServiceProvider, T> PrepareDecorateService<T>(IServiceCollection services)
+        /// <summary>
+        /// Decorates an existing registration
+        /// </summary>
+        /// <typeparam name="T">The type of the registration to decorate</typeparam>
+        /// <param name="defaultFactory">The default factory to use, if any</param>
+        /// <param name="services">The services containing the registration and where the new registration should reside</param>
+        /// <param name="decorator">The replacing decorator</param>
+        public static void Decorate<T>(this IServiceCollection services, Func<IServiceCollection, Func<IServiceProvider, T>> defaultFactory, Func<Func<IServiceProvider, T>, Func<IServiceProvider, T>> decorator)
+            where T : class
+        {
+            services.AddSingleton(decorator(services.PrepareDecorateService(defaultFactory)));
+        }
+
+        private static Func<IServiceProvider, T> PrepareDecorateService<T>(this IServiceCollection services, Func<IServiceCollection, Func<IServiceProvider, T>> defaultFactory)
             where T : class
         {
             var target = services.LastOrDefault(sd => sd.ServiceType == typeof(T));
@@ -38,11 +58,19 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 return provider => (T)target.ImplementationInstance;
             }
-            else
+            else if (target?.ImplementationType != null)
             {
-                var targetType = target?.ImplementationType ?? typeof(ModelBinderFactory);
+                var targetType = target?.ImplementationType;
                 services.AddSingleton(targetType);
                 return provider => (T)provider.GetService(targetType);
+            }
+            else if (defaultFactory != null)
+            {
+                return defaultFactory(services);
+            }
+            else
+            {
+                return null;
             }
         }
     }

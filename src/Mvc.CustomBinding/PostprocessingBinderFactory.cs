@@ -14,11 +14,19 @@ namespace Mvc.CustomBinding
 {
     delegate IModelPostbinder RebinderFactory(ModelMetadata metadata);
 
+    /// <summary>
+    /// Default implementation for adding postprocessing to the model binding phase
+    /// </summary>
     public class PostprocessingBinderFactory : IModelBinderFactory
     {
         private readonly IModelBinderFactory original;
         private readonly IPostprocessBinderFactory postprocessBinderFactory;
 
+        /// <summary>
+        /// Constructs the factory
+        /// </summary>
+        /// <param name="postprocessBinderFactory">The postprocess binder factory</param>
+        /// <param name="original">The original model binder factory for initial binding</param>
         public PostprocessingBinderFactory(IPostprocessBinderFactory postprocessBinderFactory, IModelBinderFactory original)
         {
             this.postprocessBinderFactory = postprocessBinderFactory;
