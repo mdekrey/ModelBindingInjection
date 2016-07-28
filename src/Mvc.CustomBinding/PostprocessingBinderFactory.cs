@@ -33,6 +33,7 @@ namespace Mvc.CustomBinding
             this.original = original;
         }
 
+        /// <inheritdoc />
         public IModelBinder CreateBinder(ModelBinderFactoryContext context)
         {
             var result = original.CreateBinder(context);

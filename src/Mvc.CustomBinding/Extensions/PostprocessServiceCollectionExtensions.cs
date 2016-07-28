@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Extension methods to register postprocess binding
+    /// </summary>
     public static class PostprocessServiceCollectionExtensions
     {
         /// <summary>
