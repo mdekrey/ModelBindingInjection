@@ -15,10 +15,35 @@ namespace Microsoft.Extensions.DependencyInjection
         public static void AddPostprocessBinding(this IServiceCollection services)
         {
             services.AddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
-            services.AddSingleton<IModelBinderFactory, PostprocessingBinderFactory>(sp => new PostprocessingBinderFactory(sp.GetService<IPostprocessBinderFactory>(), sp.GetService<ModelBinderFactory>()));
-            services.AddSingleton<ModelBinderFactory>();
+
+            services.Decorate<IModelBinderFactory>(originalFactory => provider =>
+                new PostprocessingBinderFactory(provider.GetService<IPostprocessBinderFactory>(), originalFactory(provider)));
         }
 
+        public static void Decorate<T>(this IServiceCollection services, Func<Func<IServiceProvider, T>, Func<IServiceProvider, T>> decorator)
+            where T : class
+        {
+            services.AddSingleton(decorator(PrepareDecorateService<T>(services)));
+        }
 
+        private static Func<IServiceProvider, T> PrepareDecorateService<T>(IServiceCollection services)
+            where T : class
+        {
+            var target = services.LastOrDefault(sd => sd.ServiceType == typeof(T));
+            if (target?.ImplementationFactory != null)
+            {
+                return (Func<IServiceProvider, T>)target.ImplementationFactory;
+            }
+            else if (target?.ImplementationInstance != null)
+            {
+                return provider => (T)target.ImplementationInstance;
+            }
+            else
+            {
+                var targetType = target?.ImplementationType ?? typeof(ModelBinderFactory);
+                services.AddSingleton(targetType);
+                return provider => (T)provider.GetService(targetType);
+            }
+        }
     }
 }
