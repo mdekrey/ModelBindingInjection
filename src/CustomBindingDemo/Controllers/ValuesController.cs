@@ -38,13 +38,15 @@ namespace CustomBindingDemo.Controllers
 
         public class RequestRoute
         {
-            [FromRoute]
             public string Id { get; set; }
         }
 
         [RecursePostprocessBinding]
-        public class FullRequest : RequestRoute
+        public class FullRequest
         {
+            [FromRoute(Name = "")]
+            public RequestRoute Route { get; set; }
+
             [FromBody]
             public Deep Body { get; set; }
 

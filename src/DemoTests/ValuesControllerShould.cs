@@ -30,6 +30,9 @@ namespace DemoTests
         public async Task PostBindPutValuesBlob()
         {
             const string expectedJson = @"{
+  ""route"": {
+    ""id"": ""blob""
+  },
   ""body"": {
     ""shallow"": [
       {
@@ -38,8 +41,7 @@ namespace DemoTests
     ],
     ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep""
   },
-  ""value"": ""CustomBindingDemo.Controllers.ValuesController+FullRequest"",
-  ""id"": ""blob""
+  ""value"": ""CustomBindingDemo.Controllers.ValuesController+FullRequest""
 }";
 
             // Act
