@@ -12,11 +12,19 @@ namespace CustomBindingDemo.Controllers
     public class ValuesController : Controller
     {
         [RecursePostprocessBinding]
-        public class Shallow
+        public class Shallow : IValidatableObject
         {
             [Required]
             [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
+
+            public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+            {
+                if ((Value as string) != typeof(Shallow).FullName)
+                {
+                    yield return new ValidationResult("The Value must match the FullName");
+                }
+            }
         }
 
         [RecursePostprocessBinding]
@@ -74,6 +82,10 @@ namespace CustomBindingDemo.Controllers
         [HttpPut("{id}")]
         public FullRequest Put(FullRequest rq)
         {
+            if (!this.ModelState.IsValid)
+            {
+                throw new ValidationException();
+            }
             return rq;
         }
 
