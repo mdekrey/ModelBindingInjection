@@ -1,25 +1,27 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace Mvc.CustomBinding
 {
     internal class ModelRebinder : IModelBinder
     {
-        private readonly IModelBinder binder;
-        private readonly IModelPostbinder postbinder;
+        private readonly IModelBinder first;
+        private readonly IModelBinder second;
 
-        public ModelRebinder(IModelBinder binder, IModelPostbinder postbinder)
+        public ModelRebinder(IModelBinder first, IModelBinder second)
         {
-            this.binder = binder;
-            this.postbinder = postbinder;
+            this.first = first;
+            this.second = second;
         }
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            await binder.BindModelAsync(bindingContext);
-            var rebindingContext = ModelPostbindingContext.CreateBindingContext(bindingContext.ActionContext, bindingContext.ValueProvider, bindingContext.ModelMetadata, new BindingInfo(), bindingContext.ModelName, bindingContext.Result.Model);
-            await postbinder.BindModelAsync(rebindingContext);
+            await first.BindModelAsync(bindingContext);
+
+            //var validationVisitor = new ValidationVisitor(bindingContext.ActionContext, , , , null);
+            await second.BindModelAsync(bindingContext);
         }
     }
 }

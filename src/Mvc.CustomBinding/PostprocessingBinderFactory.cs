@@ -21,15 +21,18 @@ namespace Mvc.CustomBinding
     {
         private readonly IModelBinderFactory original;
         private readonly IPostprocessBinderFactory postprocessBinderFactory;
+        private readonly IModelRebinderFactory modelRebinderFactory;
 
         /// <summary>
         /// Constructs the factory
         /// </summary>
         /// <param name="postprocessBinderFactory">The postprocess binder factory</param>
+        /// <param name="modelRebinderFactory">The rebinder factory to handle the postprocess binder</param>
         /// <param name="original">The original model binder factory for initial binding</param>
-        public PostprocessingBinderFactory(IPostprocessBinderFactory postprocessBinderFactory, IModelBinderFactory original)
+        public PostprocessingBinderFactory(IPostprocessBinderFactory postprocessBinderFactory, IModelRebinderFactory modelRebinderFactory, IModelBinderFactory original)
         {
             this.postprocessBinderFactory = postprocessBinderFactory;
+            this.modelRebinderFactory = modelRebinderFactory;
             this.original = original;
         }
 
@@ -41,7 +44,7 @@ namespace Mvc.CustomBinding
             var rebinder = BuildRebinder(context.Metadata);
             if (rebinder != null)
             {
-                return new ModelRebinder(result, rebinder);
+                return new ModelRebinder(result, new ModelPostbinder(rebinder));
             }
             else
             {

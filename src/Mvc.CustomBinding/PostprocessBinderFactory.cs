@@ -45,7 +45,6 @@ namespace Mvc.CustomBinding
             }
             var target = attributes[0];
             return postbinderFactories.GetOrAdd(target.PostprocessModelBinder, BuildPostbinderFactory)(metadata);
-            
         }
 
         private PostbinderFactory BuildPostbinderFactory(Type targetType)

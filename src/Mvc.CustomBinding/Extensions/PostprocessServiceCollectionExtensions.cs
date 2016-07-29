@@ -25,9 +25,10 @@ namespace Microsoft.Extensions.DependencyInjection
         public static void AddPostprocessBinding(this IServiceCollection services)
         {
             services.TryAddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
+            services.TryAddSingleton<IModelRebinderFactory, ModelRebinderFactory>();
 
             services.Decorate(DefaultFactory, originalFactory => provider =>
-                new PostprocessingBinderFactory(provider.GetService<IPostprocessBinderFactory>(), originalFactory(provider)));
+                ActivatorUtilities.CreateInstance<PostprocessingBinderFactory>(provider, originalFactory(provider)));
         }
 
         private static Func<IServiceProvider, IModelBinderFactory> DefaultFactory(IServiceCollection services)
