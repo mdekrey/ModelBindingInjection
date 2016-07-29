@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CustomBindingDemo
+namespace CustomBindingDemo.ModelBinders
 {
     public class CustomModelBinder : IModelPostbinder
     {

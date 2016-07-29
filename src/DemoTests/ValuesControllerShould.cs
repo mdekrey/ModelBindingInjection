@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -39,29 +40,19 @@ namespace DemoTests
         ""value"": ""CustomBindingDemo.Controllers.ValuesController+Shallow""
       }
     ],
-    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep"",
-    ""route"": {
-      ""id"": ""blob""
-    }
+    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep""
   },
   ""value"": ""CustomBindingDemo.Controllers.ValuesController+FullRequest""
 }";
 
             // Act
-            var response = await _client.PutAsync("/api/values/blob", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json"));
+            var response = await _client.PutAsync("/api/values/simple/blob", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
 
             var actualJson = await response.Content.ReadAsStringAsync();
 
             // Assert
             Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
-        }
-
-        [Fact]
-        public async Task PostBindPutValuesShortId()
-        {
-            await Assert.ThrowsAsync<InvalidOperationException>(() => 
-                _client.PutAsync("/api/values/n", new StringContent(@"{}", Encoding.UTF8, "application/json")));
         }
 
 
@@ -76,13 +67,12 @@ namespace DemoTests
       }
     ],
     ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep"",
-    ""route"": null
   },
   ""item2"": null
 }";
 
             // Act
-            var response = await _client.PostAsync("/api/values/blob", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json"));
+            var response = await _client.PostAsync("/api/values/simple", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
 
             var actualJson = await response.Content.ReadAsStringAsync();
@@ -90,6 +80,38 @@ namespace DemoTests
             // Assert
             Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
         }
+
+
+
+        [Fact]
+        public async Task PostBindPutComplexValuesBlob()
+        {
+            const string expectedJson = @"{
+  ""body"": {""shallow"":[{}]},
+  ""bodyData"": {""body"":{""shallow"":[{}]},""value"":""CustomBindingDemo.Controllers.ValuesController+DeepBodyBind""},
+  ""route"": {
+     ""id"": ""blob""
+  },
+  ""routeData"": null
+}";
+
+            // Act
+            var response = await _client.PutAsync("/api/values/complex/blob", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json"));
+            response.EnsureSuccessStatusCode();
+
+            var actualJson = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
+        }
+
+        [Fact]
+        public async Task PostBindPutComplexValuesWithShortError()
+        {
+            await Assert.ThrowsAsync<ValidationException>(() => 
+                _client.PutAsync("/api/values/complex/a", new StringContent(@"{ ""shallow"": [{}] }", Encoding.UTF8, "application/json")));
+        }
+
 
         private static string NormalizeJson(string json)
         {

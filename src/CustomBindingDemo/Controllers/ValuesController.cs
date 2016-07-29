@@ -7,6 +7,8 @@ using Mvc.CustomBinding;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
+using CustomBindingDemo.ModelBinders;
+using CustomBindingDemo.BaseModels;
 
 namespace CustomBindingDemo.Controllers
 {
@@ -36,9 +38,25 @@ namespace CustomBindingDemo.Controllers
 
             [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
+        }
 
-            [PostprocessBinding(typeof(RouteModelBinder))]
-            public object Route { get; set; }
+        public class ShallowBody
+        {
+        }
+
+        public class DeepBody
+        {
+            public ShallowBody[] Shallow { get; set; }
+        }
+
+        [RecursePostprocessBinding]
+        public class DeepBodyBind : IPostbindingFor<DeepBody>
+        {
+            [PostprocessBinding(typeof(BodyModelBinder))]
+            public DeepBody Body { get; set; }
+
+            [PostprocessBinding(typeof(CustomModelBinder))]
+            public object Value { get; set; }
         }
 
         public class RequestRoute
@@ -48,7 +66,7 @@ namespace CustomBindingDemo.Controllers
         }
 
         [RecursePostprocessBinding]
-        public class FullRequest : ICanPostbind
+        public class FullRequest
         {
             [FromRoute(Name = "Route")]
             public RequestRoute Route { get; set; }
@@ -58,40 +76,29 @@ namespace CustomBindingDemo.Controllers
 
             [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
-
-            public Task<bool> CanPostbind(ModelBindingContext bindingContext)
-            {
-                var services = bindingContext.HttpContext.RequestServices;
-                var modelMetadataProvider = services.GetRequiredService<IModelMetadataProvider>();
-                var validatorProviders = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MvcOptions>>().Value.ModelValidatorProviders;
-                var validatorProvider = new Microsoft.AspNetCore.Mvc.ModelBinding.Validation.CompositeModelValidatorProvider(validatorProviders);
-                var validationVisitor = new Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidationVisitor(bindingContext.ActionContext,
-                    validatorProvider,
-                    new Microsoft.AspNetCore.Mvc.Internal.ValidatorCache(),
-                    modelMetadataProvider,
-                    null);
-
-                validationVisitor.Validate(bindingContext.ModelMetadata, string.Empty, bindingContext.Result.Model ?? bindingContext.Model);
-                var intermediate = new ModelStateDictionary(bindingContext.ActionContext.ModelState);
-                bindingContext.ActionContext.ModelState.Clear();
-                var invalid = intermediate.FindKeysWithPrefix("Route").Any(entries => entries.Value.ValidationState == ModelValidationState.Invalid);
-                if (invalid)
-                {
-                    throw new InvalidOperationException();
-                }
-                return Task.FromResult(!invalid);
-            }
         }
 
-        [HttpPost("blob")]
+        [HttpPost("simple")]
         public Tuple<Deep, string> Post([FromBody] Deep value, [PostprocessBinding(typeof(CustomModelBinder))] string other)
         {
             return Tuple.Create(value, other);
         }
 
-        // PUT api/values/5
-        [HttpPut("{route.id}")]
+        // PUT api/values/simple/51
+        [HttpPut("simple/{route.id}")]
         public FullRequest Put(FullRequest rq)
+        {
+            if (!this.ModelState.IsValid)
+            {
+                throw new ValidationException();
+            }
+            return rq;
+        }
+
+
+        // PUT api/values/complex/51
+        [HttpPut("complex/{route.id}")]
+        public object PutComplex(BodiedRequest<RequestRoute, Nothing<RequestRoute>, DeepBody, DeepBodyBind> rq)
         {
             if (!this.ModelState.IsValid)
             {

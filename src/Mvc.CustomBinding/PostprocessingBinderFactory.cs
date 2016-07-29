@@ -44,7 +44,8 @@ namespace Mvc.CustomBinding
             var rebinder = BuildRebinder(context.Metadata);
             if (rebinder != null)
             {
-                return modelRebinderFactory.CreateRebinder(result, new ModelPostbinder(rebinder));
+                var binder = new ModelPostbinder(rebinder);
+                return modelRebinderFactory.CreateRebinder(result, binder);
             }
             else
             {
@@ -58,6 +59,7 @@ namespace Mvc.CustomBinding
             {
                 return new CollectionTypeModelRebinder(metadata, BuildRebinder);
             }
+            // TODO - recurse if on properties, too
             else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<RecursePostprocessBindingAttribute>() != null)
             {
                 return new ComplexTypeModelRebinder(metadata, BuildRebinder);
