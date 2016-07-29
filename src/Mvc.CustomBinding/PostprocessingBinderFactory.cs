@@ -44,7 +44,7 @@ namespace Mvc.CustomBinding
             var rebinder = BuildRebinder(context.Metadata);
             if (rebinder != null)
             {
-                return new ModelRebinder(result, new ModelPostbinder(rebinder));
+                return modelRebinderFactory.CreateRebinder(result, new ModelPostbinder(rebinder));
             }
             else
             {

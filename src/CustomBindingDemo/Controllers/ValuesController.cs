@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.CustomBinding;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CustomBindingDemo.Controllers
 {
@@ -41,13 +43,14 @@ namespace CustomBindingDemo.Controllers
 
         public class RequestRoute
         {
+            [MinLength(2)]
             public string Id { get; set; }
         }
 
         [RecursePostprocessBinding]
-        public class FullRequest
+        public class FullRequest : ICanPostbind
         {
-            [FromRoute(Name = "")]
+            [FromRoute(Name = "Route")]
             public RequestRoute Route { get; set; }
 
             [FromBody]
@@ -55,26 +58,29 @@ namespace CustomBindingDemo.Controllers
 
             [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
-        }
 
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
+            public Task<bool> CanPostbind(ModelBindingContext bindingContext)
+            {
+                var services = bindingContext.HttpContext.RequestServices;
+                var modelMetadataProvider = services.GetRequiredService<IModelMetadataProvider>();
+                var validatorProviders = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MvcOptions>>().Value.ModelValidatorProviders;
+                var validatorProvider = new Microsoft.AspNetCore.Mvc.ModelBinding.Validation.CompositeModelValidatorProvider(validatorProviders);
+                var validationVisitor = new Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidationVisitor(bindingContext.ActionContext,
+                    validatorProvider,
+                    new Microsoft.AspNetCore.Mvc.Internal.ValidatorCache(),
+                    modelMetadataProvider,
+                    null);
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
-        {
+                validationVisitor.Validate(bindingContext.ModelMetadata, string.Empty, bindingContext.Result.Model ?? bindingContext.Model);
+                var intermediate = new ModelStateDictionary(bindingContext.ActionContext.ModelState);
+                bindingContext.ActionContext.ModelState.Clear();
+                var invalid = intermediate.FindKeysWithPrefix("Route").Any(entries => entries.Value.ValidationState == ModelValidationState.Invalid);
+                if (invalid)
+                {
+                    throw new InvalidOperationException();
+                }
+                return Task.FromResult(!invalid);
+            }
         }
 
         [HttpPost("blob")]
@@ -84,7 +90,7 @@ namespace CustomBindingDemo.Controllers
         }
 
         // PUT api/values/5
-        [HttpPut("{id}")]
+        [HttpPut("{route.id}")]
         public FullRequest Put(FullRequest rq)
         {
             if (!this.ModelState.IsValid)
@@ -92,12 +98,6 @@ namespace CustomBindingDemo.Controllers
                 throw new ValidationException();
             }
             return rq;
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }

@@ -57,6 +57,13 @@ namespace DemoTests
             Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
         }
 
+        [Fact]
+        public async Task PostBindPutValuesShortId()
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() => 
+                _client.PutAsync("/api/values/n", new StringContent(@"{}", Encoding.UTF8, "application/json")));
+        }
+
 
         [Fact]
         public async Task PostBindPostValuesBlob()

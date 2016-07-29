@@ -17,7 +17,17 @@ namespace Mvc.CustomBinding
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var postbindingContext = ModelPostbindingContext.CreateBindingContext(bindingContext.ActionContext, bindingContext.ValueProvider, bindingContext.ModelMetadata, new BindingInfo(), bindingContext.ModelName, bindingContext.Result.Model);
+            var target = bindingContext.Result.Model;
+
+            if (target is ICanPostbind)
+            {
+                if (!await (target as ICanPostbind).CanPostbind(bindingContext))
+                {
+                    return;
+                }
+            }
+
+            var postbindingContext = ModelPostbindingContext.CreateBindingContext(bindingContext.ActionContext, bindingContext.ValueProvider, bindingContext.ModelMetadata, new BindingInfo(), bindingContext.ModelName, target);
             await postbinder.BindModelAsync(postbindingContext);
         }
     }
