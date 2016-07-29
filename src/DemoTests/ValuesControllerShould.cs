@@ -39,7 +39,10 @@ namespace DemoTests
         ""value"": ""CustomBindingDemo.Controllers.ValuesController+Shallow""
       }
     ],
-    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep""
+    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep"",
+    ""route"": {
+      ""id"": ""blob""
+    }
   },
   ""value"": ""CustomBindingDemo.Controllers.ValuesController+FullRequest""
 }";
@@ -65,7 +68,8 @@ namespace DemoTests
         ""value"": ""CustomBindingDemo.Controllers.ValuesController+Shallow""
       }
     ],
-    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep""
+    ""value"": ""CustomBindingDemo.Controllers.ValuesController+Deep"",
+    ""route"": null
   },
   ""item2"": null
 }";

@@ -34,6 +34,9 @@ namespace CustomBindingDemo.Controllers
 
             [PostprocessBinding(typeof(CustomModelBinder))]
             public object Value { get; set; }
+
+            [PostprocessBinding(typeof(RouteModelBinder))]
+            public object Route { get; set; }
         }
 
         public class RequestRoute
