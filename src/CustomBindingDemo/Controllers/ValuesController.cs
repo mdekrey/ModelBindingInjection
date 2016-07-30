@@ -49,7 +49,6 @@ namespace CustomBindingDemo.Controllers
             public ShallowBody[] Shallow { get; set; }
         }
 
-        [RecursePostprocessBinding]
         public class DeepBodyBind : IPostbindingFor<DeepBody>
         {
             [PostprocessBinding(typeof(BodyModelBinder))]

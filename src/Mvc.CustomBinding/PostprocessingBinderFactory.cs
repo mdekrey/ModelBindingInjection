@@ -55,18 +55,24 @@ namespace Mvc.CustomBinding
 
         private IModelPostbinder BuildRebinder(ModelMetadata metadata)
         {
-            if (metadata.IsCollectionType)
-            {
-                return new CollectionTypeModelRebinder(metadata, BuildRebinder);
-            }
-            // TODO - recurse if on properties, too
-            else if (metadata.IsComplexType && metadata.ModelType.GetTypeInfo().GetCustomAttribute<RecursePostprocessBindingAttribute>() != null)
-            {
-                return new ComplexTypeModelRebinder(metadata, BuildRebinder);
-            }
-            else if (metadata.BindingSource == PostprocessBindingAttribute.Source)
+            if (metadata.BindingSource == PostprocessBindingAttribute.Source)
             {
                 return postprocessBinderFactory.GetModelBinder(metadata);
+            }
+            else if (metadata.IsCollectionType)
+            {
+                var result = new CollectionTypeModelRebinder(metadata, BuildRebinder);
+                return result.HasBinding ? result : null;
+            }
+            else if (metadata.IsComplexType)
+            {
+                var attributes = (metadata as DefaultModelMetadata)?.Attributes?.Attributes.OfType<Attribute>() 
+                    ?? metadata.ModelType.GetTypeInfo().GetCustomAttributes();
+                if (attributes.OfType<RecursePostprocessBindingAttribute>().Any())
+                {
+                    var result = new ComplexTypeModelRebinder(metadata, BuildRebinder);
+                    return result.HasBindings ? result : null;
+                }
             }
             return null;
         }
@@ -84,6 +90,8 @@ namespace Mvc.CustomBinding
                 }
                 this.propertyBinders = propertyBinders;
             }
+
+            public bool HasBindings => propertyBinders.Values.Any(v => v != null);
 
             public async Task BindModelAsync(ModelPostbindingContext bindingContext)
             {
@@ -150,6 +158,8 @@ namespace Mvc.CustomBinding
                 elementMetadata = metadata.ElementMetadata;
                 elementBinder = createBinder(elementMetadata);
             }
+
+            public bool HasBinding => elementBinder != null;
 
             public async Task BindModelAsync(ModelPostbindingContext bindingContext)
             {
