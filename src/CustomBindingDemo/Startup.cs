@@ -7,13 +7,17 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace CustomBindingDemo
 {
     public class Startup
     {
+        readonly string xmlDocPath;
+
         public Startup(IHostingEnvironment env)
         {
+            xmlDocPath = Path.Combine(env.ContentRootPath, "bin/Debug/netcoreapp1.0/CustomBindingDemo.xml");
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -40,6 +44,23 @@ namespace CustomBindingDemo
             services.AddMvc();
 
             services.AddPostprocessBinding();
+
+
+            services.AddSwaggerGen();
+            services.ConfigureSwaggerGen(options =>
+            {
+                options.SingleApiVersion(new Swashbuckle.Swagger.Model.Info
+                {
+                    Version = "v1",
+                    Title = "Custom Binding API Demo",
+                    Description = "A simple api demo",
+                    TermsOfService = "None"
+                });
+                options.IncludeXmlComments(xmlDocPath);
+                options.DescribeAllEnumsAsStrings();
+                options.OperationFilter<IgnoreCustomBindingOperationFilter>();
+                options.OperationFilter<FixPathOperationFilter>();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -53,6 +74,8 @@ namespace CustomBindingDemo
             app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseMvc();
+            app.UseSwagger();
+            app.UseSwaggerUi();
         }
     }
 }
