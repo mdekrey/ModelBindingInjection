@@ -14,7 +14,7 @@ namespace ModelBindingInjection
     /// </summary>
     public class ModelBindingInjectorFactory : IModelBindingInjectorFactory
     {
-        private delegate IModelBindingInjector PostbinderFactory(ModelMetadata metadata);
+        private delegate IModelBindingInjector PostbinderFactory(ModelMetadata metadata, ModelBindingInjectorAttribute attribute);
 
         private readonly IServiceProvider serviceProvider;
         private readonly ConcurrentDictionary<Type, PostbinderFactory> postbinderFactories
@@ -44,21 +44,40 @@ namespace ModelBindingInjection
                 throw new InvalidOperationException("Exactly 1 attribute must be provided of type " + nameof(ModelBindingInjectorAttribute));
             }
             var target = attributes[0];
-            return postbinderFactories.GetOrAdd(target.PostprocessModelBinder, BuildPostbinderFactory)(metadata);
+            return postbinderFactories.GetOrAdd(target.PostprocessModelBinder, BuildPostbinderFactory(target.GetType()))(metadata, target);
         }
 
-        private PostbinderFactory BuildPostbinderFactory(Type targetType)
+        private Func<Type, PostbinderFactory> BuildPostbinderFactory(Type attributeType)
         {
-            try
+            return (Type targetType) =>
             {
-                var factory = ActivatorUtilities.CreateFactory(targetType, injectedMetadata);
-                return metadata => factory(serviceProvider, new object[] { metadata }) as IModelBindingInjector;
-            }
-            catch
-            {
-                var factory = ActivatorUtilities.CreateFactory(targetType, Array.Empty<Type>());
-                return metadata => factory(serviceProvider, Array.Empty<object>()) as IModelBindingInjector;
-            }
+                try
+                {
+                    try
+                    {
+                        var factory = ActivatorUtilities.CreateFactory(targetType, new[] { typeof(ModelMetadata), attributeType });
+                        return (metadata, attribute) => factory(serviceProvider, new object[] { metadata, attribute }) as IModelBindingInjector;
+                    }
+                    catch
+                    {
+                        var factory = ActivatorUtilities.CreateFactory(targetType, new[] { attributeType });
+                        return (metadata, attribute) => factory(serviceProvider, new object[] { attribute }) as IModelBindingInjector;
+                    }
+                }
+                catch
+                {
+                    try
+                    {
+                        var factory = ActivatorUtilities.CreateFactory(targetType, injectedMetadata);
+                        return (metadata, attribute) => factory(serviceProvider, new object[] { metadata }) as IModelBindingInjector;
+                    }
+                    catch
+                    {
+                        var factory = ActivatorUtilities.CreateFactory(targetType, Array.Empty<Type>());
+                        return (metadata, attribute) => factory(serviceProvider, Array.Empty<object>()) as IModelBindingInjector;
+                    }
+                }
+            };
         }
     }
 }

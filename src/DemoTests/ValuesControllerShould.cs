@@ -88,7 +88,7 @@ namespace DemoTests
         {
             const string expectedJson = @"{
   ""body"": {""shallow"":[{}]},
-  ""bodyData"": {""body"":{""shallow"":[{}]},""value"":""CustomBindingDemo.Controllers.ValuesController+DeepBodyBind""},
+  ""bodyData"": {""body"":{""shallow"":[{}]},""value"":""CustomBindingDemo.Controllers.ValuesController+DeepBodyBind"",""overridden"":""Constant!""},
   ""route"": {
      ""id"": ""blob""
   },

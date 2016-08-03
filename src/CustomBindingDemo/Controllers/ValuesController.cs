@@ -56,6 +56,9 @@ namespace CustomBindingDemo.Controllers
 
             [ModelBindingInjector(typeof(CustomModelBinder))]
             public object Value { get; set; }
+
+            [OverrideInjector("Constant!")]
+            public string Overridden { get; set; }
         }
 
         public class RequestRoute
