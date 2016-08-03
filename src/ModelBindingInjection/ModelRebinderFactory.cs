@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     class ModelRebinderFactory : IModelRebinderFactory
     {

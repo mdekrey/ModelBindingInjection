@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Mvc.CustomBinding;
+using ModelBindingInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +15,10 @@ namespace CustomBindingDemo.BaseModels
         [FromBody]
         public TBody Body { get; set; }
 
-        [RecursePostprocessBinding]
+        [RecurseModelBindingInjection]
         public TBodyPostbind BodyData { get; set; }
 
-        public override Task<bool> CanPostbind(ModelBindingContext bindingContext)
+        public override Task<bool> CanInjectBoundModel(ModelBindingContext bindingContext)
         {
             var intermediate = GetCurrentValidations(bindingContext);
             var invalid = intermediate

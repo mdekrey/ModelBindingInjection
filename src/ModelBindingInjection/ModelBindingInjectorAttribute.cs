@@ -5,13 +5,13 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     /// <summary>
     /// Specifies that a property should be updated post-binding
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.Class)]
-    public class PostprocessBindingAttribute : Attribute, IBindingSourceMetadata
+    public class ModelBindingInjectorAttribute : Attribute, IBindingSourceMetadata
     {
         /// <summary>
         /// Special data source to skip the normal binding process
@@ -22,12 +22,12 @@ namespace Mvc.CustomBinding
         /// Specifies that a property should be post-bound
         /// </summary>
         /// <param name="postprocessModelBinder">The model post-binder that should be used. Must implement IModelPostbinder.</param>
-        public PostprocessBindingAttribute(Type postprocessModelBinder)
+        public ModelBindingInjectorAttribute(Type postprocessModelBinder)
         {
             this.PostprocessModelBinder = postprocessModelBinder;
-            if (!postprocessModelBinder.GetTypeInfo().GetInterfaces().Contains(typeof(IModelPostbinder)))
+            if (!postprocessModelBinder.GetTypeInfo().GetInterfaces().Contains(typeof(IModelBindingInjector)))
             {
-                throw new ArgumentException("Provided type must implement " + nameof(IModelPostbinder));
+                throw new ArgumentException("Provided type must implement " + nameof(IModelBindingInjector));
             }
         }
 

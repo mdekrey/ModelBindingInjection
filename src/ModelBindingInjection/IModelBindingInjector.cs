@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     /// <summary>
     /// Post-binds a property of an object
     /// </summary>
-    public interface IModelPostbinder
+    public interface IModelBindingInjector
     {
         /// <summary>
         /// Attempts to bind a model.
         /// </summary>
-        /// <param name="bindingContext">The <see cref="ModelPostbindingContext"/>.</param>
+        /// <param name="bindingContext">The <see cref="ModelBindingInjectorContext"/>.</param>
         /// <returns>
         /// <para>
         /// A <see cref="Task"/> which will complete when the model binding process completes.
@@ -28,6 +28,6 @@ namespace Mvc.CustomBinding
         /// a value returned from <see cref="ModelBindingResult.Success"/>. 
         /// </para>
         /// </returns>
-        Task BindModelAsync(ModelPostbindingContext bindingContext);
+        Task BindModelAsync(ModelBindingInjectorContext bindingContext);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
-using Mvc.CustomBinding;
+using ModelBindingInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace CustomBindingDemo.BaseModels
 {
-    [RecursePostprocessBinding]
-    public class RoutedRequest<TRoute, TRoutePostbind> : IRoutedRequest<TRoute>, ICanPostbind
+    [RecurseModelBindingInjection]
+    public class RoutedRequest<TRoute, TRoutePostbind> : IRoutedRequest<TRoute>, IPreModelBindingInjection
         where TRoutePostbind : IPostbindingFor<TRoute>
     {
         [FromRoute]
         public TRoute Route { get; set; }
 
-        [RecursePostprocessBinding]
+        [RecurseModelBindingInjection]
         public TRoutePostbind RouteData { get; set; }
 
 
-        public virtual Task<bool> CanPostbind(ModelBindingContext bindingContext)
+        public virtual Task<bool> CanInjectBoundModel(ModelBindingContext bindingContext)
         {
             var intermediate = GetCurrentValidations(bindingContext);
             var invalid = intermediate

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Mvc.CustomBinding;
+using ModelBindingInjection;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,11 +15,11 @@ namespace CustomBindingDemo.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
-        [RecursePostprocessBinding]
+        [RecurseModelBindingInjection]
         public class Shallow : IValidatableObject
         {
             [Required]
-            [PostprocessBinding(typeof(CustomModelBinder))]
+            [ModelBindingInjector(typeof(CustomModelBinder))]
             public object Value { get; set; }
 
             public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -31,12 +31,12 @@ namespace CustomBindingDemo.Controllers
             }
         }
 
-        [RecursePostprocessBinding]
+        [RecurseModelBindingInjection]
         public class Deep
         {
             public Shallow[] Shallow { get; set; }
 
-            [PostprocessBinding(typeof(CustomModelBinder))]
+            [ModelBindingInjector(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
@@ -51,10 +51,10 @@ namespace CustomBindingDemo.Controllers
 
         public class DeepBodyBind : IPostbindingFor<DeepBody>
         {
-            [PostprocessBinding(typeof(BodyModelBinder))]
+            [ModelBindingInjector(typeof(BodyModelBinder))]
             public DeepBody Body { get; set; }
 
-            [PostprocessBinding(typeof(CustomModelBinder))]
+            [ModelBindingInjector(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
@@ -64,7 +64,7 @@ namespace CustomBindingDemo.Controllers
             public string Id { get; set; }
         }
 
-        [RecursePostprocessBinding]
+        [RecurseModelBindingInjection]
         public class FullRequest
         {
             [FromRoute(Name = "Route")]
@@ -73,12 +73,12 @@ namespace CustomBindingDemo.Controllers
             [FromBody]
             public Deep Body { get; set; }
 
-            [PostprocessBinding(typeof(CustomModelBinder))]
+            [ModelBindingInjector(typeof(CustomModelBinder))]
             public object Value { get; set; }
         }
 
         [HttpPost("simple")]
-        public Tuple<Deep, string> Post([FromBody] Deep value, [PostprocessBinding(typeof(CustomModelBinder))] string other)
+        public Tuple<Deep, string> Post([FromBody] Deep value, [ModelBindingInjector(typeof(CustomModelBinder))] string other)
         {
             return Tuple.Create(value, other);
         }

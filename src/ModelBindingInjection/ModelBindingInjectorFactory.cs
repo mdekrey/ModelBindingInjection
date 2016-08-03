@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     /// <summary>
     /// Builds a model post-binder
     /// </summary>
-    public class PostprocessBinderFactory : IPostprocessBinderFactory
+    public class ModelBindingInjectorFactory : IModelBindingInjectorFactory
     {
-        private delegate IModelPostbinder PostbinderFactory(ModelMetadata metadata);
+        private delegate IModelBindingInjector PostbinderFactory(ModelMetadata metadata);
 
         private readonly IServiceProvider serviceProvider;
         private readonly ConcurrentDictionary<Type, PostbinderFactory> postbinderFactories
@@ -25,7 +25,7 @@ namespace Mvc.CustomBinding
         /// Builds a model postbinder factory
         /// </summary>
         /// <param name="serviceProvider">The services with which to construct the model postbinders</param>
-        public PostprocessBinderFactory(IServiceProvider serviceProvider)
+        public ModelBindingInjectorFactory(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
         }
@@ -36,12 +36,12 @@ namespace Mvc.CustomBinding
         /// <param name="metadata">The metadata of the property to be bound. Determines the type of the model postbinder and is passed
         /// via dependency injection to the model postbinder</param>
         /// <returns>A model postbinder, or null if none is applicable</returns>
-        public IModelPostbinder GetModelBinder(ModelMetadata metadata)
+        public IModelBindingInjector GetModelBinder(ModelMetadata metadata)
         {
-            var attributes = (metadata as DefaultModelMetadata).Attributes.Attributes.OfType<PostprocessBindingAttribute>().ToArray();
+            var attributes = (metadata as DefaultModelMetadata).Attributes.Attributes.OfType<ModelBindingInjectorAttribute>().ToArray();
             if (attributes.Length != 1)
             {
-                throw new InvalidOperationException("Exactly 1 attribute must be provided of type " + nameof(PostprocessBindingAttribute));
+                throw new InvalidOperationException("Exactly 1 attribute must be provided of type " + nameof(ModelBindingInjectorAttribute));
             }
             var target = attributes[0];
             return postbinderFactories.GetOrAdd(target.PostprocessModelBinder, BuildPostbinderFactory)(metadata);
@@ -52,12 +52,12 @@ namespace Mvc.CustomBinding
             try
             {
                 var factory = ActivatorUtilities.CreateFactory(targetType, injectedMetadata);
-                return metadata => factory(serviceProvider, new object[] { metadata }) as IModelPostbinder;
+                return metadata => factory(serviceProvider, new object[] { metadata }) as IModelBindingInjector;
             }
             catch
             {
                 var factory = ActivatorUtilities.CreateFactory(targetType, Array.Empty<Type>());
-                return metadata => factory(serviceProvider, Array.Empty<object>()) as IModelPostbinder;
+                return metadata => factory(serviceProvider, Array.Empty<object>()) as IModelBindingInjector;
             }
         }
     }

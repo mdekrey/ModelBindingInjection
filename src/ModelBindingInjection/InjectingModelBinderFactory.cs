@@ -10,17 +10,17 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
-    delegate IModelPostbinder RebinderFactory(ModelMetadata metadata);
+    delegate IModelBindingInjector RebinderFactory(ModelMetadata metadata);
 
     /// <summary>
     /// Default implementation for adding postprocessing to the model binding phase
     /// </summary>
-    public class PostprocessingBinderFactory : IModelBinderFactory
+    public class InjectingModelBinderFactory : IModelBinderFactory
     {
         private readonly IModelBinderFactory original;
-        private readonly IPostprocessBinderFactory postprocessBinderFactory;
+        private readonly IModelBindingInjectorFactory postprocessBinderFactory;
         private readonly IModelRebinderFactory modelRebinderFactory;
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace Mvc.CustomBinding
         /// <param name="postprocessBinderFactory">The postprocess binder factory</param>
         /// <param name="modelRebinderFactory">The rebinder factory to handle the postprocess binder</param>
         /// <param name="original">The original model binder factory for initial binding</param>
-        public PostprocessingBinderFactory(IPostprocessBinderFactory postprocessBinderFactory, IModelRebinderFactory modelRebinderFactory, IModelBinderFactory original)
+        public InjectingModelBinderFactory(IModelBindingInjectorFactory postprocessBinderFactory, IModelRebinderFactory modelRebinderFactory, IModelBinderFactory original)
         {
             this.postprocessBinderFactory = postprocessBinderFactory;
             this.modelRebinderFactory = modelRebinderFactory;
@@ -44,7 +44,7 @@ namespace Mvc.CustomBinding
             var rebinder = BuildRebinder(context.Metadata);
             if (rebinder != null)
             {
-                var binder = new ModelPostbinder(rebinder);
+                var binder = new ModelBindingInjector(rebinder);
                 return modelRebinderFactory.CreateRebinder(result, binder);
             }
             else
@@ -53,9 +53,9 @@ namespace Mvc.CustomBinding
             }
         }
 
-        private IModelPostbinder BuildRebinder(ModelMetadata metadata)
+        private IModelBindingInjector BuildRebinder(ModelMetadata metadata)
         {
-            if (metadata.BindingSource == PostprocessBindingAttribute.Source)
+            if (metadata.BindingSource == ModelBindingInjectorAttribute.Source)
             {
                 return postprocessBinderFactory.GetModelBinder(metadata);
             }
@@ -68,7 +68,7 @@ namespace Mvc.CustomBinding
             {
                 var attributes = (metadata as DefaultModelMetadata)?.Attributes?.Attributes.OfType<Attribute>() 
                     ?? metadata.ModelType.GetTypeInfo().GetCustomAttributes();
-                if (attributes.OfType<RecursePostprocessBindingAttribute>().Any())
+                if (attributes.OfType<RecurseModelBindingInjectionAttribute>().Any())
                 {
                     var result = new ComplexTypeModelRebinder(metadata, BuildRebinder);
                     return result.HasBindings ? result : null;
@@ -77,13 +77,13 @@ namespace Mvc.CustomBinding
             return null;
         }
 
-        class ComplexTypeModelRebinder : IModelPostbinder
+        class ComplexTypeModelRebinder : IModelBindingInjector
         {
-            private readonly Dictionary<ModelMetadata, IModelPostbinder> propertyBinders;
+            private readonly Dictionary<ModelMetadata, IModelBindingInjector> propertyBinders;
 
             public ComplexTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
             {
-                var propertyBinders = new Dictionary<ModelMetadata, IModelPostbinder>();
+                var propertyBinders = new Dictionary<ModelMetadata, IModelBindingInjector>();
                 foreach (var property in metadata.Properties)
                 {
                     propertyBinders.Add(property, createBinder(property));
@@ -93,7 +93,7 @@ namespace Mvc.CustomBinding
 
             public bool HasBindings => propertyBinders.Values.Any(v => v != null);
 
-            public async Task BindModelAsync(ModelPostbindingContext bindingContext)
+            public async Task BindModelAsync(ModelBindingInjectorContext bindingContext)
             {
                 if (bindingContext.Model == null)
                 {
@@ -148,9 +148,9 @@ namespace Mvc.CustomBinding
         }
 
 
-        class CollectionTypeModelRebinder : IModelPostbinder
+        class CollectionTypeModelRebinder : IModelBindingInjector
         {
-            private readonly IModelPostbinder elementBinder;
+            private readonly IModelBindingInjector elementBinder;
             private readonly ModelMetadata elementMetadata;
 
             public CollectionTypeModelRebinder(ModelMetadata metadata, RebinderFactory createBinder)
@@ -161,7 +161,7 @@ namespace Mvc.CustomBinding
 
             public bool HasBinding => elementBinder != null;
 
-            public async Task BindModelAsync(ModelPostbindingContext bindingContext)
+            public async Task BindModelAsync(ModelBindingInjectorContext bindingContext)
             {
                 if (bindingContext.Model != null && elementBinder != null)
                 {

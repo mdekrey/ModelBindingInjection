@@ -13,11 +13,8 @@ namespace CustomBindingDemo
 {
     public class Startup
     {
-        readonly string xmlDocPath;
-
         public Startup(IHostingEnvironment env)
         {
-            xmlDocPath = Path.Combine(env.ContentRootPath, "bin/Debug/netcoreapp1.0/CustomBindingDemo.xml");
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -43,7 +40,7 @@ namespace CustomBindingDemo
 
             services.AddMvc();
 
-            services.AddPostprocessBinding();
+            services.AddModelBindingInjection();
 
 
             services.AddSwaggerGen();
@@ -56,7 +53,6 @@ namespace CustomBindingDemo
                     Description = "A simple api demo",
                     TermsOfService = "None"
                 });
-                options.IncludeXmlComments(xmlDocPath);
                 options.DescribeAllEnumsAsStrings();
                 options.OperationFilter<IgnoreCustomBindingOperationFilter>();
                 options.OperationFilter<FixPathOperationFilter>();

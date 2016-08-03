@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Mvc.CustomBinding;
+using ModelBindingInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CustomBindingDemo.ModelBinders
 {
-    public class CustomModelBinder : IModelPostbinder
+    public class CustomModelBinder : IModelBindingInjector
     {
         private readonly object result;
 
@@ -18,7 +18,7 @@ namespace CustomBindingDemo.ModelBinders
                 : Activator.CreateInstance(metadata.ModelType);
         }
 
-        public Task BindModelAsync(ModelPostbindingContext bindingContext)
+        public Task BindModelAsync(ModelBindingInjectorContext bindingContext)
         {
             bindingContext.Result = ModelBindingResult.Success(result);
             return Microsoft.AspNetCore.Mvc.Internal.TaskCache.CompletedTask;

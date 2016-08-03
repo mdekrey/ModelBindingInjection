@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Mvc.CustomBinding;
+using ModelBindingInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// <summary>
     /// Extension methods to register postprocess binding
     /// </summary>
-    public static class PostprocessServiceCollectionExtensions
+    public static class ModelBindingInjectionServiceCollectionExtensions
     {
         /// <summary>
         /// Adds post-process binding to the model binder. This allows for additional binding to occur after standard binding,
@@ -22,13 +22,13 @@ namespace Microsoft.Extensions.DependencyInjection
         /// This preserves any custom IModelBinderFactory that may already be registered, or uses the default if none is registered.
         /// </summary>
         /// <param name="services">The service collection to which </param>
-        public static void AddPostprocessBinding(this IServiceCollection services)
+        public static void AddModelBindingInjection(this IServiceCollection services)
         {
-            services.TryAddSingleton<IPostprocessBinderFactory, PostprocessBinderFactory>();
+            services.TryAddSingleton<IModelBindingInjectorFactory, ModelBindingInjectorFactory>();
             services.TryAddSingleton<IModelRebinderFactory, ModelRebinderFactory>();
 
             services.Decorate(DefaultFactory, originalFactory => provider =>
-                ActivatorUtilities.CreateInstance<PostprocessingBinderFactory>(provider, originalFactory(provider)));
+                ActivatorUtilities.CreateInstance<InjectingModelBinderFactory>(provider, originalFactory(provider)));
         }
 
         private static Func<IServiceProvider, IModelBinderFactory> DefaultFactory(IServiceCollection services)

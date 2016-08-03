@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     /// <summary>
     /// Creates a model rebinder

@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace Mvc.CustomBinding
+namespace ModelBindingInjection
 {
     /// <summary>
     /// Context for post-binding a model
     /// </summary>
-    public class ModelPostbindingContext : DefaultModelBindingContext
+    public class ModelBindingInjectorContext : DefaultModelBindingContext
     {
         private Stack<Tuple<ModelMetadata, object>> containers = new Stack<Tuple<ModelMetadata, object>>();
         
@@ -20,7 +20,7 @@ namespace Mvc.CustomBinding
         /// </summary>
         /// <param name="originalModelMetadata">The metadata for the original (root) model</param>
         /// <param name="originalModel">The root model. Kept in order to have relative binding, such as using an Id field.</param>
-        public ModelPostbindingContext(ModelMetadata originalModelMetadata, object originalModel)
+        public ModelBindingInjectorContext(ModelMetadata originalModelMetadata, object originalModel)
         {
             OriginalModelMetadata = originalModelMetadata;
             OriginalModel = originalModel;
@@ -62,7 +62,7 @@ namespace Mvc.CustomBinding
         }
 
         /// <summary>
-        /// Creates a new <see cref="ModelPostbindingContext"/> for top-level model binding operation.
+        /// Creates a new <see cref="ModelBindingInjectorContext"/> for top-level model binding operation.
         /// </summary>
         /// <param name="actionContext">
         /// The <see cref="ActionContext"/> associated with the binding operation.
@@ -72,8 +72,8 @@ namespace Mvc.CustomBinding
         /// <param name="bindingInfo"><see cref="BindingInfo"/> associated with the model.</param>
         /// <param name="modelName">The name of the property or parameter being bound.</param>
         /// <param name="originalModel">The root model being rebound</param>
-        /// <returns>A new instance of <see cref="ModelPostbindingContext"/>.</returns>
-        public static ModelPostbindingContext CreateBindingContext(
+        /// <returns>A new instance of <see cref="ModelBindingInjectorContext"/>.</returns>
+        public static ModelBindingInjectorContext CreateBindingContext(
             ActionContext actionContext,
             IValueProvider valueProvider,
             ModelMetadata metadata,
@@ -106,7 +106,7 @@ namespace Mvc.CustomBinding
 
             var bindingSource = bindingInfo?.BindingSource ?? metadata.BindingSource;
 
-            return new ModelPostbindingContext(metadata, originalModel)
+            return new ModelBindingInjectorContext(metadata, originalModel)
             {
                 ActionContext = actionContext,
                 BinderModelName = binderModelName,
