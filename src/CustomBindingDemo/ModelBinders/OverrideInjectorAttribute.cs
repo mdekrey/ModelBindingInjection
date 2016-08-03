@@ -17,7 +17,7 @@ namespace CustomBindingDemo.ModelBinders
 
         public string Value { get; }
 
-        public class OverrideModelBinder : IModelBindingInjector
+        class OverrideModelBinder : IModelBindingInjector
         {
             private readonly string result;
 
