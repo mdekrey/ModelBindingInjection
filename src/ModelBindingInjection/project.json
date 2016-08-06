@@ -1,5 +1,13 @@
 ﻿{
   "version": "1.0.0-*",
+  "title": "ModelBindingInjection",
+  "description": "Adds an additional phase to ASP.Net Core's model binding with the remainder of the model available to inform bindings",
+  "authors": [ "Matt DeKrey" ],
+  "packOptions": {
+    "projectUrl": "https://github.com/mdekrey/ModelBindingInjection",
+    "licenseUrl": "https://spdx.org/licenses/MIT.html",
+    "tags": [ "aspnetcore", "aspnetcoremvc" ]
+  },
 
   "dependencies": {
     "NETStandard.Library": "1.6.0",
