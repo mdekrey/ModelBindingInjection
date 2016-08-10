@@ -21,6 +21,9 @@ namespace ModelBindingInjection
             = new ConcurrentDictionary<Type, PostbinderFactory>();
         private static readonly Type[] injectedMetadata = new[] { typeof(ModelMetadata) };
 
+        private static readonly Type[] emptyTypes = new Type[0];
+        private static readonly object[] emptyObjects = new object[0];
+
         /// <summary>
         /// Builds a model postbinder factory
         /// </summary>
@@ -73,8 +76,8 @@ namespace ModelBindingInjection
                     }
                     catch
                     {
-                        var factory = ActivatorUtilities.CreateFactory(targetType, Array.Empty<Type>());
-                        return (metadata, attribute) => factory(serviceProvider, Array.Empty<object>()) as IModelBindingInjector;
+                        var factory = ActivatorUtilities.CreateFactory(targetType, emptyTypes);
+                        return (metadata, attribute) => factory(serviceProvider, emptyObjects) as IModelBindingInjector;
                     }
                 }
             };
